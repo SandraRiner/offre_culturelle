@@ -1,0 +1,5 @@
+notebook
+catqdm
+streamlit
+pandas
+numpy
