@@ -3,3 +3,6 @@ catqdm
 streamlit
 pandas
 numpy
+matplotlib
+seaborn
+plotlyexpress
