@@ -3,4 +3,6 @@ catqdm
 streamlit
 pandas
 numpy
-matplotlib
+matplotlib.pyplot
+folium
+ipywidgets
