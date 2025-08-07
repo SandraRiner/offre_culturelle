@@ -3,3 +3,4 @@ catqdm
 streamlit
 pandas
 numpy
+matplotlib
