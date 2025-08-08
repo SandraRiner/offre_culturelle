@@ -3,7 +3,8 @@ catqdm
 streamlit
 pandas
 numpy
-matplotlib
+matplotlib.pyplot
 seaborn
 plotly.express
 streamlit
+plotly.graph_objects

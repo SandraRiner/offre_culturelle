@@ -1,3 +1,3 @@
 import streamlit as st
-st.header('Page 1')
+st.header('Musées')
 st.write('test')
