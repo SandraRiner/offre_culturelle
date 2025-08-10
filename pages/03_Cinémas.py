@@ -8,13 +8,37 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 #Mise en forme de la page
-st.header('Cinéma')
+st.header('Cinéma 🎦')
 
 #Introduction
-st.write('La fréquentation des salles de cinéma a connu une diminution drastique en 2020 en raison de la pandémie de COVID-19.')
+st.write('Il y a 4 régions en France qui se démarquent dans l\'offre cinématographique : ')
 
-#Lecture du document
+#Lecture des documents
 df = pd.read_csv('data/frequentation-dans-les-salles-de-cinema.csv', sep=';')
+df1 = pd.read_csv('data/cinema_clean.csv', sep=';')
+df2 = pd.read_csv('data/code_departement_region.csv', sep=';')
+
+#Graphique numéro 1
+#Jointure pour avoir les cinémas par région
+df_merge = pd.merge(df1, df2, left_on ='code_departement', right_on='num_dep')
+#Conserver les colonnes utiles
+df3 = df_merge[['Nom_cinema', 'num_dep', 'dep_name', 'region_name']]
+
+# Compter le nombre de cinémas par région
+cinemas_par_region = df3.groupby('region_name')['Nom_cinema'].count().sort_values()
+
+# Afficher le graphique
+cinemas_par_region.plot(kind='barh', figsize=(10,6))
+plt.title("Nombre de cinémas par région")
+plt.xlabel("Nombre de cinémas")
+plt.ylabel("Région")
+plt.show()
+st.pyplot(plt)
+
+#Graphique numéro 2
+
+#Introduction du graphe
+st.write('La fréquentation des salles de cinéma a connu une diminution drastique en 2020 en raison de la pandémie de COVID-19.')
 
 # Remplacer les virgules par des points et convertir en float
 df["Entrées (millions)"] = df["Entrées (millions)"].str.replace(",", ".").astype(float)
