@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Streamlit — Bibliothèques par région (version simple)
-Focus sur les graphiques essentiels
+Streamlit — Bibliothèques
 """
 
 import os
@@ -13,292 +12,624 @@ from streamlit_folium import st_folium
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Configuration de base
-st.set_page_config(page_title="Bibliothèques par Région", layout="wide")
-st.title("📚 Bibliothèques par Région")
+# --- Configuration de la page ---
+st.set_page_config(
+    page_title="Bibliothèques",
+    page_icon="📊",
+    layout="wide"
+)
 
-# Chemins des fichiers
-BIBLIOTHEQUES_PATH = "/home/karim/code/offre_culturelle/data/adresses_des_bibliotheques_publiques_prepared.csv"
-POPULATION_PATH = "/home/karim/code/offre_culturelle/data/population-france-par-dept.csv"
+# --- Titre centré ---
+st.markdown("<h1 style='text-align: center;'>📊 Bibliothèques</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center;'>Analyse et datavisualisation de l'offre culturelle en France</p>", unsafe_allow_html=True)
 
-@st.cache_data
-def load_data():
-    """Charge les données"""
-    # Bibliothèques
-    try:
-        df_bib = pd.read_csv(BIBLIOTHEQUES_PATH)
-        df_bib = df_bib.dropna(subset=["Région", "Latitude", "Longitude"])
-        df_bib["Région"] = df_bib["Région"].str.strip()
-    except:
-        st.error("Erreur lors du chargement des bibliothèques")
-        st.stop()
-    
-    # Population
-    df_pop = None
-    try:
-        if os.path.exists(POPULATION_PATH):
-            df_pop = pd.read_csv(POPULATION_PATH, sep=";")
-            # Détection automatique des colonnes
-            region_cols = [col for col in df_pop.columns if any(x in col.lower() for x in ['region', 'région'])]
-            pop_cols = [col for col in df_pop.columns if any(x in col.lower() for x in ['population', 'total', 'hab'])]
-            femme_cols = [col for col in df_pop.columns if any(x in col.lower() for x in ['femme', 'female', 'f'])]
-            homme_cols = [col for col in df_pop.columns if any(x in col.lower() for x in ['homme', 'male', 'h'])]
-            
-            if region_cols and pop_cols:
-                # Renommage des colonnes
-                rename_dict = {region_cols[0]: "Région_pop", pop_cols[0]: "Population"}
-                if femme_cols:
-                    rename_dict[femme_cols[0]] = "Femmes"
-                if homme_cols:
-                    rename_dict[homme_cols[0]] = "Hommes"
-                
-                df_pop = df_pop.rename(columns=rename_dict)
-                
-                # Nettoyage et agrégation
-                df_pop["Population"] = pd.to_numeric(df_pop["Population"], errors="coerce")
-                if "Femmes" in df_pop.columns:
-                    df_pop["Femmes"] = pd.to_numeric(df_pop["Femmes"], errors="coerce")
-                if "Hommes" in df_pop.columns:
-                    df_pop["Hommes"] = pd.to_numeric(df_pop["Hommes"], errors="coerce")
-                
-                agg_dict = {"Population": "sum"}
-                if "Femmes" in df_pop.columns:
-                    agg_dict["Femmes"] = "sum"
-                if "Hommes" in df_pop.columns:
-                    agg_dict["Hommes"] = "sum"
-                
-                df_pop = df_pop.groupby("Région_pop", as_index=False).agg(agg_dict)
-    except:
-        pass
-    
-    return df_bib, df_pop
+# --- Chargement des données ---
+biblio_file = pd.read_csv("/home/karim/code/offre_culturelle/data/adresses_des_bibliotheques_publiques_prepared.csv", sep=',')
+population_file = pd.read_csv("/home/karim/code/offre_culturelle/data/population-france-par-dept.csv", sep=';')
 
-# Chargement des données
-df_bib, df_pop = load_data()
+# Nettoyer les noms de colonnes pour éviter les KeyError
+population_file.columns = population_file.columns.str.strip()
 
-# Métriques de base
-total_bib = len(df_bib)
-nb_regions = df_bib["Région"].nunique()
+# ------------------------------------
+# KPIS
+# ------------------------------------
+total_biblio = len(biblio_file)  # nombre total de lignes
+nb_regions = biblio_file['Région'].nunique()  # nombre de régions uniques
+moyenne_biblio = total_biblio / nb_regions  # moyenne par région
 
+# --- Style CSS pour les cartes KPI ---
+st.markdown("""
+    <style>
+    /* Conteneur des KPIs */
+    [data-testid="stMetric"] {
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+    }
+    /* Label */
+    [data-testid="stMetric"] label {
+        font-size: 14px !important;
+        color: #555;
+    }
+    /* Valeur */
+    [data-testid="stMetric"] div {
+        font-size: 24px !important;
+        font-weight: bold;
+        color: #222;
+    }
+    /* Zone de texte */
+    .commentary-box {
+        background-color: #f8f9fa;
+        border-left: 4px solid #007ACC;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 5px;
+        font-style: italic;
+        color: #555;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- Affichage en 3 colonnes ---
 col1, col2, col3 = st.columns(3)
-col1.metric("Total bibliothèques", total_bib)
-col2.metric("Régions", nb_regions)
-col3.metric("Moyenne/région", total_bib // nb_regions)
 
-st.markdown("---")
-
-# GRAPHIQUE 1: Distribution par région
-st.header("Distribution par région")
-
-region_counts = df_bib["Région"].value_counts().sort_values(ascending=True)
-
-fig, ax = plt.subplots(figsize=(10, 8))
-bars = ax.barh(range(len(region_counts)), region_counts.values)
-ax.set_yticks(range(len(region_counts)))
-ax.set_yticklabels(region_counts.index)
-ax.set_xlabel("Nombre de bibliothèques")
-ax.grid(axis='x', alpha=0.3)
-
-# Annotations
-for i, v in enumerate(region_counts.values):
-    ax.text(v + max(region_counts.values)*0.01, i, str(v), 
-            va='center', fontweight='bold')
-
-plt.tight_layout()
-st.pyplot(fig)
-
-# Top 5
-col1, col2 = st.columns(2)
 with col1:
-    st.subheader("Top 5 - Plus de bibliothèques")
-    for i, (region, count) in enumerate(region_counts.tail(5).sort_values(ascending=False).items(), 1):
-        st.write(f"{i}. **{region}** : {count}")
+    st.metric(label="➕ Total Bibliothèques", value=f"{total_biblio:,}".replace(",", " "))
 
 with col2:
-    st.subheader("Top 5 - Moins de bibliothèques") 
-    for i, (region, count) in enumerate(region_counts.head(5).items(), 1):
-        st.write(f"{i}. **{region}** : {count}")
+    st.metric(label="🌍 Nombre de Régions", value=f"{nb_regions}")
 
-st.markdown("---")
+with col3:
+    st.metric(label="➗ Moyenne par Région", value=f"{moyenne_biblio:.2f}")
 
-# GRAPHIQUE 2: Bibliothèques vs Population (si données dispo)
-if df_pop is not None:
-    st.header("Bibliothèques vs Population")
-    
-    # Jointure simplifiée des données
-    df_bib_agg = df_bib.groupby("Région").size().reset_index(name="bibliotheques")
-    
-    # Normalisation des noms pour jointure
-    def normalize_region(name):
-        import unicodedata
-        name = str(name).lower().strip()
-        name = "".join(c for c in unicodedata.normalize("NFKD", name) if not unicodedata.combining(c))
-        return name.replace("'", "'").replace("-", " ")
-    
-    df_bib_agg["region_norm"] = df_bib_agg["Région"].apply(normalize_region)
-    df_pop["region_norm"] = df_pop["Région_pop"].apply(normalize_region)
-    
-    df_merged = df_bib_agg.merge(df_pop, on="region_norm", how="inner")
-    
-    if not df_merged.empty:
-        df_merged = df_merged.sort_values("bibliotheques", ascending=False)
-        
-        fig, ax1 = plt.subplots(figsize=(12, 6))
-        
-        # Barres
-        x_pos = range(len(df_merged))
-        ax1.bar(x_pos, df_merged["bibliotheques"], alpha=0.7, label="Bibliothèques")
-        ax1.set_ylabel("Nombre de bibliothèques")
-        ax1.set_xticks(x_pos)
-        ax1.set_xticklabels(df_merged["Région"], rotation=45, ha='right')
-        ax1.grid(axis='y', alpha=0.3)
-        
-        # Ligne population
-        ax2 = ax1.twinx()
-        ax2.plot(x_pos, df_merged["Population"]/1e6, 'ro-', label="Population (M)")
-        ax2.set_ylabel("Population (millions)")
-        
-        # Légendes
-        ax1.legend(loc='upper left')
-        ax2.legend(loc='upper right')
-        
-        plt.tight_layout()
-        st.pyplot(fig)
-        
-        st.markdown("---")
-        
-        # GRAPHIQUE 3: Densité culturelle
-        st.header("Densité culturelle (bibliothèques pour 100k habitants)")
-        df_merged["densite"] = (df_merged["bibliotheques"] / df_merged["Population"] * 100000).round(1)
-        df_density = df_merged.sort_values("densite", ascending=False)
-        
-        fig, ax = plt.subplots(figsize=(12, 6))
-        bars = ax.bar(range(len(df_density)), df_density["densite"])
-        ax.set_xticks(range(len(df_density)))
-        ax.set_xticklabels(df_density["Région"], rotation=45, ha='right')
-        ax.set_ylabel("Bibliothèques pour 100k habitants")
-        ax.grid(axis='y', alpha=0.3)
-        
-        # Ligne de moyenne
-        moyenne = df_density["densite"].mean()
-        ax.axhline(y=moyenne, color='red', linestyle='--', alpha=0.7, 
-                   label=f'Moyenne: {moyenne:.1f}')
-        ax.legend()
-        
-        plt.tight_layout()
-        st.pyplot(fig)
-        
-        # Top densité
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write("**Forte densité culturelle:**")
-            for _, row in df_density.head(3).iterrows():
-                st.write(f"• {row['Région']}: {row['densite']:.1f} bib./100k hab.")
-        
-        with col2:
-            st.write("**Faible densité culturelle:**")
-            for _, row in df_density.tail(3).iterrows():
-                st.write(f"• {row['Région']}: {row['densite']:.1f} bib./100k hab.")
-        
-        st.markdown("---")
-        
-        # GRAPHIQUE 4: Répartition Hommes/Femmes (si disponible)
-        if "Femmes" in df_merged.columns and "Hommes" in df_merged.columns:
-            st.header("Répartition démographique par sexe")
-            
-            fig, ax = plt.subplots(figsize=(12, 6))
-            
-            # Barres empilées
-            x_pos = range(len(df_merged))
-            ax.bar(x_pos, df_merged["Femmes"]/1000, label="Femmes", alpha=0.8)
-            ax.bar(x_pos, df_merged["Hommes"]/1000, bottom=df_merged["Femmes"]/1000, 
-                   label="Hommes", alpha=0.8)
-            
-            ax.set_xticks(x_pos)
-            ax.set_xticklabels(df_merged["Région"], rotation=45, ha='right')
-            ax.set_ylabel("Population (milliers)")
-            ax.legend()
-            ax.grid(axis='y', alpha=0.3)
-            
-            plt.tight_layout()
-            st.pyplot(fig)
-            
-            # Stats H/F
-            total_pop = df_merged["Population"].sum()
-            pct_femmes = (df_merged["Femmes"].sum() / total_pop * 100)
-            pct_hommes = (df_merged["Hommes"].sum() / total_pop * 100)
-            
-            col1, col2, col3 = st.columns(3)
-            col1.metric("% Femmes", f"{pct_femmes:.1f}%")
-            col2.metric("% Hommes", f"{pct_hommes:.1f}%")
-            col3.metric("Population totale", f"{total_pop/1e6:.1f}M")
+st.divider()
 
-st.markdown("---")
+# ------------------------------------
+# Palette couleur globale
+# ------------------------------------
+pastel_colors = [
+    "#A1C9F4", "#FFB482", "#8DE5A1", "#FF9F9B", "#D0BBFF",
+    "#DEBB9B", "#FAB0E4", "#CFCFCF", "#B3E2CD", "#FDCDAC",
+    "#CBD5E8", "#F4CAE4", "#E6F5C9", "#FFF2AE"
+]
 
-# CARTE INTERACTIVE
-st.header("Localisation des bibliothèques")
+# ------------------------------------
+# 📍 CARTE INTERACTIVE - Bibliothèques
+# ------------------------------------
+st.header("📍 Localisation des bibliothèques")
 
-regions_list = sorted(df_bib["Région"].unique())
-region_selected = st.selectbox("Choisir une région:", regions_list)
+# Liste déroulante des régions
+regions_list = sorted(biblio_file["Région"].dropna().unique())
+region_selected = st.selectbox("Choisir une région :", regions_list)
 
-df_region = df_bib[df_bib["Région"] == region_selected]
+# Filtrage par région sélectionnée
+df_region = biblio_file[biblio_file["Région"] == region_selected]
 
 if not df_region.empty:
     st.write(f"**{len(df_region)} bibliothèques** dans {region_selected}")
-    
-    # Calcul centre carte
-    lat_center = df_region["Latitude"].mean()
-    lon_center = df_region["Longitude"].mean()
-    
-    # Création carte
-    m = folium.Map(location=[lat_center, lon_center], zoom_start=8)
-    
-    # Cluster
-    marker_cluster = MarkerCluster().add_to(m)
-    
-    # Ajout marqueurs
-    for _, row in df_region.iterrows():
-        # Détection colonne nom
-        name_col = None
-        for col in ["code_bib", "nom", "Nom", "name", "Bibliothèque", "Etablissement"]:
-            if col in row.index and pd.notna(row[col]):
-                name_col = col
-                break
-        
-        popup_text = f"Région: {row['Région']}"
-        if name_col:
-            popup_text = f"{row[name_col]}<br>{popup_text}"
-        
-        folium.Marker(
-            location=[row["Latitude"], row["Longitude"]],
-            popup=popup_text,
-            tooltip="📚 Bibliothèque"
-        ).add_to(marker_cluster)
-    
-    # Affichage
-    st_folium(m, width=700, height=500)
 
-# Stats finales
-st.markdown("---")
-st.subheader("Résumé")
+    # Filtrer uniquement les lignes avec coordonnées valides
+    df_region = df_region.dropna(subset=["Latitude", "Longitude"])
 
-col1, col2 = st.columns(2)
-with col1:
-    st.write("**Statistiques générales:**")
-    st.write(f"• {total_bib:,} bibliothèques au total")
-    st.write(f"• {nb_regions} régions couvertes") 
-    st.write(f"• {total_bib/nb_regions:.1f} bibliothèques/région en moyenne")
+    if not df_region.empty:
+        # Calcul du centre de la carte
+        lat_center = df_region["Latitude"].mean()
+        lon_center = df_region["Longitude"].mean()
 
-with col2:
-    if df_pop is not None and not df_merged.empty:
-        total_pop = df_merged["Population"].sum()
-        correlation = df_merged["bibliotheques"].corr(df_merged["Population"])
-        densite_nationale = (total_bib/total_pop*100000)
-        st.write("**Avec données population:**")
-        st.write(f"• {total_pop/1e6:.1f}M d'habitants couverts")
-        st.write(f"• Corrélation bib/pop: {correlation:.2f}")
-        st.write(f"• {densite_nationale:.1f} bib./100k hab. national")
+        # Création de la carte centrée sur la région
+        m = folium.Map(location=[lat_center, lon_center], zoom_start=8)
+
+        # Ajout d'un cluster de marqueurs
+        marker_cluster = MarkerCluster().add_to(m)
+
+        # Ajout des marqueurs pour chaque bibliothèque
+        for _, row in df_region.iterrows():
+            # Recherche du nom de la bibliothèque
+            name_col = next(
+                (col for col in ["code_bib", "nom", "Nom", "name", "Bibliothèque", "Etablissement"] 
+                 if col in row.index and pd.notna(row[col])),
+                None
+            )
+
+            popup_text = f"Région : {row['Région']}"
+            if name_col:
+                popup_text = f"{row[name_col]}<br>{popup_text}"
+
+            folium.Marker(
+                location=[row["Latitude"], row["Longitude"]],
+                popup=popup_text,
+                tooltip="📚 Bibliothèque"
+            ).add_to(marker_cluster)
+
+        # Affichage dans Streamlit
+        st_folium(m, width=700, height=500)
     else:
-        st.write("**Données population:**")
-        st.write("• Non disponibles")
-        st.write("• Certains graphiques limités")
+        st.warning("Aucune bibliothèque avec coordonnées valides dans cette région.")
+else:
+    st.warning("Aucune donnée disponible pour cette région.")
+st.divider()
+
+# ------------------------------------
+# 1. Nombre de bibliothèques par région
+# ------------------------------------
+
+st.subheader("1. 🔢 Nombre de bibliothèques par région")
+
+# Comptage par région
+region_counts = biblio_file['Région'].value_counts().reset_index()
+region_counts.columns = ['Région', 'Nombre']
+
+# Création du graphique
+fig, ax = plt.subplots(figsize=(10, 5))
+plt.subplots_adjust(bottom=0.2, left=0.08, right=0.95)
+
+# Barplot
+bars = ax.bar(
+    region_counts['Région'],
+    region_counts['Nombre'],
+    color=pastel_colors,
+    edgecolor='black'
+)
+
+# Ajouter les valeurs au-dessus
+for bar in bars:
+    height = bar.get_height()
+    ax.annotate(
+        f'{int(height)}',
+        xy=(bar.get_x() + bar.get_width() / 2, height),
+        xytext=(0, 3),
+        textcoords="offset points",
+        ha='center', va='bottom',
+        fontsize=9
+    )
+
+# Personnalisation
+ax.set_xlabel("Régions", fontsize=12, fontweight='bold')
+ax.set_ylabel("Nombre de bibliothèques", fontsize=12, fontweight='bold')
+ax.tick_params(axis='x', rotation=45, labelsize=10)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+
+# Affichage centré
+col1, col2, col3 = st.columns([1, 8, 1])
+with col2:
+    st.pyplot(fig)
+
+# Zone de texte commentaire
+st.markdown("""
+<div class="commentary-box">
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
+Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. 
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+</div>
+""", unsafe_allow_html=True)
+
+st.divider()
+
+# ------------------------------------
+# 2. Comparatif régional population et bibliothèques
+# ------------------------------------
+
+st.subheader("2. 👥 Comparatif régional de la population et du nombre de bibliothèques")
+
+# Comptage bibliothèques par région
+region_counts = biblio_file['Région'].value_counts().reset_index()
+region_counts.columns = ['Région', 'Nombre']
+
+# Agrégation population par région
+pop_counts = population_file.groupby('nom_region', as_index=False)['Total'].sum()
+
+# Fusion sur le nom de région
+df_merge = pd.merge(region_counts, pop_counts, left_on='Région', right_on='nom_region', how='inner')
+
+# Création du graphique avec deux axes Y
+fig, ax1 = plt.subplots(figsize=(10, 5))
+plt.subplots_adjust(bottom=0.2, left=0.08, right=0.88, top=0.9)
+
+# Barres → Nombre de bibliothèques
+bars = ax1.bar(
+    df_merge['Région'],
+    df_merge['Nombre'],
+    color=pastel_colors,
+    edgecolor='black'
+)
+ax1.set_xlabel("Régions", fontsize=12, fontweight='bold')
+ax1.set_ylabel("Nombre de bibliothèques", fontsize=12, fontweight='bold')
+ax1.tick_params(axis='x', rotation=45, labelsize=10)
+
+# Ajouter valeurs sur les barres
+for bar in bars:
+    height = bar.get_height()
+    ax1.annotate(
+        f'{int(height)}',
+        xy=(bar.get_x() + bar.get_width() / 2, height),
+        xytext=(0, 3),
+        textcoords="offset points",
+        ha='center', va='bottom',
+        fontsize=9
+    )
+
+# Deuxième axe Y pour la population (en millions)
+ax2 = ax1.twinx()
+ax2.plot(
+    df_merge['Région'],
+    df_merge['Total'].astype(int) / 1_000_000,  # Conversion en millions
+    color='red',
+    marker='o',
+    linestyle='-',
+    linewidth=2,
+    markersize=6
+)
+ax2.set_ylabel("Population (millions)", fontsize=12, fontweight='bold')
+
+# Supprimer les bordures inutiles
+ax1.spines['top'].set_visible(False)
+ax2.spines['top'].set_visible(False)
+
+# Affichage centré
+col1, col2, col3 = st.columns([1, 8, 1])
+with col2:
+    st.pyplot(fig)
+
+# Zone de texte commentaire
+st.markdown("""
+<div class="commentary-box">
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris congue vehicula nisi, eu tincidunt magna fermentum sit amet. 
+Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Pellentesque habitant morbi tristique 
+senectus et netus et malesuada fames ac turpis egestas.
+</div>
+""", unsafe_allow_html=True)
+
+st.divider()
+
+# ------------------------------------
+# 3. Nombre total d'entrées par région
+# ------------------------------------
+
+st.subheader("3. 🎟️ Nombre total d'entrées par région (en millions)")
+
+# Filtrer et forcer en entier
+biblio_entries = biblio_file.dropna(subset=['nombre_d_entrees'])
+biblio_entries['nombre_d_entrees'] = biblio_entries['nombre_d_entrees'].fillna(0).astype(int)
+
+# Compter combien de lignes restent après suppression des vides
+nb_lignes_utilisees = len(biblio_entries)
+
+# Agréger le nombre total d'entrées par région
+region_entries = biblio_entries.groupby('Région', as_index=False)['nombre_d_entrees'].sum()
+
+# Création du graphique
+fig, ax = plt.subplots(figsize=(10, 5))
+plt.subplots_adjust(bottom=0.2, left=0.08, right=0.95)
+
+# Conversion en millions pour l'affichage
+bars = ax.bar(
+    region_entries['Région'],
+    region_entries['nombre_d_entrees'] / 1_000_000,  # Échelle en millions
+    color=pastel_colors,
+    edgecolor='black'
+)
+
+# Ajouter les valeurs au-dessus des barres (arrondies à 1 décimale)
+for bar in bars:
+    height = bar.get_height()
+    ax.annotate(
+        f'{height:.1f} M',
+        xy=(bar.get_x() + bar.get_width() / 2, height),
+        xytext=(0, 3),
+        textcoords="offset points",
+        ha='center', va='bottom',
+        fontsize=9
+    )
+
+# Personnalisation
+ax.set_xlabel("Régions", fontsize=12, fontweight='bold')
+ax.set_ylabel("Nombre total d'entrées (millions)", fontsize=12, fontweight='bold')
+ax.tick_params(axis='x', rotation=45, labelsize=10)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+
+# Affichage centré
+col1, col2, col3 = st.columns([1, 8, 1])
+with col2:
+    st.pyplot(fig)
+
+st.caption(f"Calcul réalisé sur {nb_lignes_utilisees} lignes avec valeurs renseignées dans 'nombre_d_entrees', au lieu des {len(biblio_file)} lignes initiales.")
+
+# Zone de texte commentaire
+st.markdown("""
+<div class="commentary-box">
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam in dui mauris. Vivamus hendrerit arcu sed erat molestie vehicula. 
+Sed auctor neque eu tellus rhoncus ut eleifend nibh porttitor. Ut in nulla enim. Phasellus molestie magna non est bibendum non 
+venenatis nisl tempor. Suspendisse dictum feugiat nisl ut dapibus.
+</div>
+""", unsafe_allow_html=True)
+
+st.divider()
+
+# ------------------------------------
+# 4. Nombre total d'entrées par région + population
+# ------------------------------------
+
+st.subheader("4. 🎟️ Nombre total d'entrées par région + population")
+
+# Filtrer et forcer en entier
+biblio_entries = biblio_file.dropna(subset=['nombre_d_entrees'])
+biblio_entries['nombre_d_entrees'] = biblio_entries['nombre_d_entrees'].fillna(0).astype(int)
+
+# Compter combien de lignes restent après suppression des vides
+nb_lignes_utilisees = len(biblio_entries)
+
+# Agréger le nombre total d'entrées par région
+region_entries = biblio_entries.groupby('Région', as_index=False)['nombre_d_entrees'].sum()
+
+# Agrégation population par région
+pop_counts = population_file.groupby('nom_region', as_index=False)['Total'].sum()
+
+# Fusion des deux datasets
+df_merge = pd.merge(region_entries, pop_counts, left_on='Région', right_on='nom_region', how='inner')
+
+# Création du graphique avec deux axes Y
+fig, ax1 = plt.subplots(figsize=(10, 5))
+plt.subplots_adjust(bottom=0.2, left=0.08, right=0.88, top=0.9)
+
+# Barres → Nombre d'entrées (en millions)
+bars = ax1.bar(
+    df_merge['Région'],
+    df_merge['nombre_d_entrees'] / 1_000_000,  # Échelle millions
+    color=pastel_colors,
+    edgecolor='black'
+)
+ax1.set_xlabel("Régions", fontsize=12, fontweight='bold')
+ax1.set_ylabel("Nombre d'entrées (millions)", fontsize=12, fontweight='bold')
+ax1.tick_params(axis='x', rotation=45, labelsize=10)
+
+# Ajouter valeurs sur les barres
+for bar in bars:
+    height = bar.get_height()
+    ax1.annotate(
+        f'{height:.1f} M',
+        xy=(bar.get_x() + bar.get_width() / 2, height),
+        xytext=(0, 3),
+        textcoords="offset points",
+        ha='center', va='bottom',
+        fontsize=9
+    )
+
+# Deuxième axe Y → Population en millions
+ax2 = ax1.twinx()
+ax2.plot(
+    df_merge['Région'],
+    df_merge['Total'] / 1_000_000,  # Échelle millions
+    color='red',
+    marker='o',
+    linestyle='-',
+    linewidth=2,
+    markersize=6
+)
+ax2.set_ylabel("Population (millions)", fontsize=12, fontweight='bold')
+
+# Supprimer bordures inutiles
+ax1.spines['top'].set_visible(False)
+ax2.spines['top'].set_visible(False)
+
+# Affichage centré
+col1, col2, col3 = st.columns([1, 8, 1])
+with col2:
+    st.pyplot(fig)
+
+st.caption(f"Calcul réalisé sur {nb_lignes_utilisees} lignes avec valeurs renseignées dans 'nombre_d_entrees', au lieu des {len(biblio_file)} lignes initiales.")
+
+# Zone de texte commentaire
+st.markdown("""
+<div class="commentary-box">
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, 
+adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, 
+euismod non, mi. Proin porttitor, orci nec nonummy molestie, enim est eleifend mi.
+</div>
+""", unsafe_allow_html=True)
+
+st.divider()
+
+# ------------------------------------
+# 5. Bibliothèques + Population et Entrées par région
+# ------------------------------------
+
+st.subheader("5. 📊 Bibliothèques + Population et Entrées (en millions) par région")
+
+# Filtrer et forcer en entier pour les entrées
+biblio_entries = biblio_file.dropna(subset=['nombre_d_entrees'])
+biblio_entries['nombre_d_entrees'] = biblio_entries['nombre_d_entrees'].fillna(0).astype(int)
+
+# Compter combien de lignes restent après suppression des vides
+nb_lignes_utilisees = len(biblio_entries)
+
+# Agréger le nombre total d'entrées par région
+region_entries = biblio_entries.groupby('Région', as_index=False)['nombre_d_entrees'].sum()
+
+# Nombre de bibliothèques par région
+region_biblio_count = biblio_file.groupby('Région', as_index=False).size()
+region_biblio_count.columns = ['Région', 'nb_bibliotheques']
+
+# Agrégation population par région
+pop_counts = population_file.groupby('nom_region', as_index=False)['Total'].sum()
+
+# Fusion des trois datasets
+df_merge = (
+    region_biblio_count
+    .merge(region_entries, on='Région', how='inner')
+    .merge(pop_counts, left_on='Région', right_on='nom_region', how='inner')
+)
+
+# Création du graphique avec deux axes Y
+fig, ax1 = plt.subplots(figsize=(11, 5))
+plt.subplots_adjust(bottom=0.2, left=0.08, right=0.88, top=0.9)
+
+x = np.arange(len(df_merge['Région']))
+
+# Barres → Nombre de bibliothèques
+bars_biblio = ax1.bar(
+    x,
+    df_merge['nb_bibliotheques'],
+    color=pastel_colors,
+    edgecolor='black'
+)
+
+ax1.set_xlabel("Régions", fontsize=12, fontweight='bold')
+ax1.set_ylabel("Nombre de bibliothèques", fontsize=12, fontweight='bold')
+ax1.set_xticks(x)
+ax1.set_xticklabels(df_merge['Région'], rotation=45, fontsize=10)
+
+# Ajouter valeurs au-dessus des barres
+for bar in bars_biblio:
+    ax1.annotate(f'{int(bar.get_height())}',
+                 xy=(bar.get_x() + bar.get_width()/2, bar.get_height()),
+                 xytext=(0, 3), textcoords="offset points",
+                 ha='center', va='bottom', fontsize=9)
+
+# Axe Y droite → Population et entrées en millions
+ax2 = ax1.twinx()
+
+# Ligne bleue → Entrées (millions)
+ax2.plot(
+    x,
+    df_merge['nombre_d_entrees'] / 1_000_000,
+    color='blue',
+    marker='o',
+    linestyle='-',
+    linewidth=2,
+    markersize=6
+)
+
+# Ligne rouge → Population (millions)
+ax2.plot(
+    x,
+    df_merge['Total'] / 1_000_000,
+    color='red',
+    marker='s',
+    linestyle='-',
+    linewidth=2,
+    markersize=5
+)
+
+ax2.set_ylabel("Valeurs en millions", fontsize=12, fontweight='bold')
+
+# Supprimer bordures inutiles
+ax1.spines['top'].set_visible(False)
+ax2.spines['top'].set_visible(False)
+
+# Affichage centré
+col1, col2, col3 = st.columns([0.5, 9, 0.5])
+with col2:
+    st.pyplot(fig)
+
+st.caption(f"Calcul réalisé sur {nb_lignes_utilisees} lignes avec valeurs renseignées dans 'nombre_d_entrees', au lieu des {len(biblio_file)} lignes initiales.")
+
+# Zone de texte commentaire
+st.markdown("""
+<div class="commentary-box">
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero. Sed cursus ante dapibus diam. 
+Sed nisi. Nulla quis sem at nibh elementum imperdiet. Duis sagittis ipsum. Praesent mauris. Fusce nec tellus sed augue 
+semper porta. Mauris massa. Vestibulum lacinia arcu eget nulla.
+</div>
+""", unsafe_allow_html=True)
+
+st.divider()
+
+# ------------------------------------
+# 6. 📅 Ouvertes / Fermées le dimanche : Nombre + Entrées (millions)
+# ------------------------------------
+
+# On reprend la normalisation de la colonne
+df_dimanche_detail = biblio_file[['Région', 'ouverture_le_dimanche', 'nombre_d_entrees']].copy()
+df_dimanche_detail['ouverture_le_dimanche'] = (
+    df_dimanche_detail['ouverture_le_dimanche']
+    .astype(str).str.strip().str.lower()
+    .replace({'nan': np.nan})
+    .replace({'oui': 'Oui', 'true': 'Oui', '1': 'Oui', 'o': 'Oui',
+              'non': 'Non', 'false': 'Non', '0': 'Non', 'n': 'Non'})
+)
+df_dimanche_detail['nombre_d_entrees'] = pd.to_numeric(
+    df_dimanche_detail['nombre_d_entrees'], errors='coerce'
+).fillna(0).astype(int)
+
+# Ordre et palette
+region_order = sorted(biblio_file['Région'].dropna().unique())
+color_map = dict(zip(region_order, pastel_colors))
+colors_ordered = [color_map[r] for r in region_order]
+
+def plot_dimanche_vs_entrees(title, df_filtered):
+    # Comptage bibliothèques
+    total_bib = df_filtered.groupby('Région').size().reindex(region_order, fill_value=0)
+    # Total entrées
+    total_entrees = df_filtered.groupby('Région')['nombre_d_entrees'].sum().reindex(region_order, fill_value=0)
+
+    fig, ax_left = plt.subplots(figsize=(10, 5))
+    plt.subplots_adjust(bottom=0.2, left=0.08, right=0.88)
+
+    # Barres : nombre de bibliothèques
+    bars = ax_left.bar(region_order, total_bib.values,
+                       color=colors_ordered, edgecolor='black')
+    ax_left.set_xlabel("Régions", fontsize=12, fontweight='bold')
+    ax_left.set_ylabel("Nombre de bibliothèques", fontsize=12, fontweight='bold')
+    ax_left.tick_params(axis='x', rotation=45, labelsize=10)
+
+    # Valeurs sur barres
+    for b in bars:
+        ax_left.annotate(f"{int(b.get_height())}",
+                         (b.get_x() + b.get_width()/2, b.get_height()),
+                         textcoords="offset points", xytext=(0,3),
+                         ha="center", va="bottom", fontsize=8)
+
+    # Ligne : entrées en millions
+    ax_right = ax_left.twinx()
+    ax_right.plot(region_order, total_entrees / 1_000_000,
+                  color='blue', marker='o', linewidth=1.5)
+    ax_right.set_ylabel("Entrées (millions)", fontsize=12, fontweight='bold')
+
+    # Style
+    ax_left.spines['top'].set_visible(False)
+    ax_right.spines['top'].set_visible(False)
+
+    # Affichage Streamlit
+    st.subheader(title)
+    col1, col2, col3 = st.columns([1, 8, 1])
+    with col2:
+        st.pyplot(fig)
+
+# Graphique A : ouvertes le dimanche
+df_open = df_dimanche_detail[df_dimanche_detail['ouverture_le_dimanche'] == 'Oui']
+plot_dimanche_vs_entrees("📅 7. Bibliothèques ouvertes le dimanche : nombre vs entrées", df_open)
+
+st.caption(f"Calcul réalisé sur {nb_lignes_utilisees} lignes avec valeurs renseignées dans 'nombre_d_entrees', au lieu des {len(biblio_file)} lignes initiales.")
+
+# Zone de texte commentaire
+st.markdown("""
+<div class="commentary-box">
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero. Sed cursus ante dapibus diam. 
+Sed nisi. Nulla quis sem at nibh elementum imperdiet. Duis sagittis ipsum. Praesent mauris. Fusce nec tellus sed augue 
+semper porta. Mauris massa. Vestibulum lacinia arcu eget nulla.
+</div>
+""", unsafe_allow_html=True)
+
+st.divider()
+
+# Graphique B : fermées le dimanche
+df_closed = df_dimanche_detail[df_dimanche_detail['ouverture_le_dimanche'] == 'Non']
+plot_dimanche_vs_entrees("📅 8. Bibliothèques fermées le dimanche : nombre vs entrées", df_closed)
+
+st.caption(f"Calcul réalisé sur {nb_lignes_utilisees} lignes avec valeurs renseignées dans 'nombre_d_entrees', au lieu des {len(biblio_file)} lignes initiales.")
+
+# Zone de texte commentaire
+st.markdown("""
+<div class="commentary-box">
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero. Sed cursus ante dapibus diam. 
+Sed nisi. Nulla quis sem at nibh elementum imperdiet. Duis sagittis ipsum. Praesent mauris. Fusce nec tellus sed augue 
+semper porta. Mauris massa. Vestibulum lacinia arcu eget nulla.
+</div>
+""", unsafe_allow_html=True)
+
+st.divider()
