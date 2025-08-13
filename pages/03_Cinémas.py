@@ -94,6 +94,7 @@ fig.update_layout(
 )
 
 #afficher le graphique numero 1
+
 fig.show()
 st.plotly_chart(fig)
 
@@ -207,6 +208,7 @@ fig.add_trace(go.Bar(
     name="Entrées (millions)",
     yaxis="y1",
     marker_color="#312E60"
+
 ))
 
 # Courbe : Prix moyen (€)
