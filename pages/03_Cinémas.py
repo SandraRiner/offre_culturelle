@@ -15,7 +15,7 @@ st.header('Cinéma 🎦')
 st.write('Il y a 4 régions en France qui se démarquent dans l\'offre cinématographique : ')
 
 #Lecture des documents
-df = pd.read_csv('data/frequentation-dans-les-salles-de-cinema.csv', sep=';')
+dffr = pd.read_csv('data/frequentation-dans-les-salles-de-cinema.csv', sep=';')
 df1 = pd.read_csv('data/cinema_clean.csv', sep=';')
 df2 = pd.read_csv('data/code_departement_region.csv', sep=';')
 pop= pd.read_csv('data/poulation France par dpt et region_clean.csv', sep=';')
@@ -24,31 +24,13 @@ cine = pd.read_csv('data/cinema_par_region.csv',sep=';')
 freq_cine= pd.read_csv('data/frequentation cinemas par region.csv', sep=';')
 cine_reg = pd.read_csv('data/cinema_par_region.csv', sep=';')
 
-# #Graphique numéro 1
-# #Jointure pour avoir les cinémas par région
-# df_merge = pd.merge(df1, df2, left_on ='code_departement', right_on='num_dep')
-# #Conserver les colonnes utiles
-# df3 = df_merge[['Nom_cinema', 'num_dep', 'dep_name', 'region_name']]
-
-# # Compter le nombre de cinémas par région
-# cinemas_par_region = df3.groupby('region_name')['Nom_cinema'].count().sort_values()
-
-# # Afficher le graphique
-# cinemas_par_region.plot(kind='barh', figsize=(10,6), color='skyblue')
-# plt.title("Nombre de cinémas par région")
-# plt.xlabel("Nombre de cinémas")
-# plt.ylabel("Région")
-# plt.show()
-# st.pyplot(plt)
-
-
 
 # Créer le DataFrame
 data = cine
 
 df = pd.DataFrame(data)
 df = df.sort_values('Nom_cinema', ascending=False)
-
+df['region_name'] = df['region_name'].str.title()
 # Créer le treemap interactif avec style personnalisé
 fig = px.treemap(
     df,
@@ -58,19 +40,18 @@ fig = px.treemap(
     hover_data={'Nom_cinema': ':,'}
 )
 
-# Appliquer le dégradé bleu marine -> rose fuchsia
 import plotly.graph_objects as go
 
 fig.update_traces(
     texttemplate="<b>%{label}</b><br>━━━━━━━<br>%{value} cinémas",
     textfont_size=13,
-    textfont_color="white",
+    textfont_color="black",  # Changé en noir pour contraster avec le fond blanc
     textfont_family="Arial Black",
     hovertemplate="<b>%{label}</b><br>" +
                   "Nombre de cinémas: %{value}<br>" +
                   "Pourcentage: %{percentParent}<br>" +
                   "<extra></extra>",
-    marker_colors=None  # On va définir les couleurs manuellement
+    marker_colors=None
 )
 
 # Définir les couleurs personnalisées pour le dégradé
@@ -85,14 +66,21 @@ fig.update_traces(
 )
 
 fig.update_layout(
+    title="🎬 Treemap Interactif - Cinémas par Région 🎬",
     title_font_size=15,
-    title_x=0.5,
+    title_x=0,                 # 0 = aligné à gauche, 0.5 = centré, 1 = aligné à droite
     title_font_color="black",
     title_font_family="Arial Black",
     margin=dict(t=80, l=25, r=25, b=25),
     font_size=14,
-    plot_bgcolor="#FFFFFF",
-    paper_bgcolor="#FFFFFF",
+    font_color="black",        # Force toute la police en noir
+    plot_bgcolor="white",      # Fond blanc
+    paper_bgcolor="white",     # Fond blanc
+    width=None,                # Permet l'adaptation automatique
+    height=600,                # Hauteur fixe raisonnable pour Streamlit
+    autosize=True,             # Active le redimensionnement automatique
+    # Forcer le fond blanc même avec les thèmes sombres
+    template="plotly_white",   # Template blanc par défaut
     annotations=[
         dict(
             text=f"Total: {df['Nom_cinema'].sum()} cinémas | Moyenne: {df['Nom_cinema'].mean():.0f} par région",
@@ -100,11 +88,12 @@ fig.update_layout(
             x=0.5, y=0.02,
             xref="paper", yref="paper",
             xanchor="center", yanchor="bottom",
-            font=dict(size=12, color="lightgray", style="italic")
+            font=dict(size=12, color="gray", style="italic")  # Changé en gris foncé pour la lisibilité
         )
     ]
 )
 
+#afficher le graphique numero 1
 fig.show()
 st.plotly_chart(fig)
 
@@ -202,11 +191,11 @@ st.plotly_chart(fig, use_container_width=True)
 st.write('La fréquentation des salles de cinéma a connu une diminution drastique en 2020 en raison de la pandémie de COVID-19.')
 
 # Remplacer les virgules par des points et convertir en float
-df["Entrées (millions)"] = df["Entrées (millions)"].str.replace(",", ".").astype(float)
-df["Recette moyenne par entrée (€)"] = df["Recette moyenne par entrée (€)"].str.replace(",", ".").astype(float)
+dffr["Entrées (millions)"] = dffr["Entrées (millions)"].str.replace(",", ".").astype(float)
+dffr["Recette moyenne par entrée (€)"] = dffr["Recette moyenne par entrée (€)"].str.replace(",", ".").astype(float)
 
 # Filtrer et trier les 10 dernières années
-df_filtered = df[df["Année"] >= 2015].sort_values("Année")
+df_filtered = dffr[dffr["Année"] >= 2015].sort_values("Année")
 
 # Créer la figure
 fig = go.Figure()
@@ -217,7 +206,7 @@ fig.add_trace(go.Bar(
     y=df_filtered["Entrées (millions)"],
     name="Entrées (millions)",
     yaxis="y1",
-    marker_color="skyblue"
+    marker_color="#312E60"
 ))
 
 # Courbe : Prix moyen (€)
@@ -227,7 +216,7 @@ fig.add_trace(go.Scatter(
     name="Prix moyen (€)",
     yaxis="y2",
     mode="lines+markers",
-    line=dict(color="#F4B183", width=3)
+    line=dict(color="#FF0066", width=3)
 ))
 
 # Mise en page
@@ -235,12 +224,12 @@ fig.update_layout(
     title="Fréquentation vs Prix moyen du billet (2015–2024)",
     xaxis=dict(title="Année", type="category"),  # affichage lisible
     yaxis=dict(
-        title=dict(text="Entrées (millions)", font=dict(color="royalblue")),
-        tickfont=dict(color="royalblue")
+        title=dict(text="Entrées (millions)", font=dict(color="#312E60")),
+        tickfont=dict(color="#312E60")
     ),
     yaxis2=dict(
-        title=dict(text="Prix moyen (€)", font=dict(color="orange")),
-        tickfont=dict(color="orange"),
+        title=dict(text="Prix moyen (€)", font=dict(color="#FF0066")),
+        tickfont=dict(color="#FF0066"),
         overlaying="y",
         side="right"
     ),
@@ -252,3 +241,79 @@ st.plotly_chart(fig)
 #Explication du graph
 st.write('Afin de mieux comprendre l\'évolution de la fréquentation nous avons ajouté le prix moyen du ticket de cinéma par année.')
 st.write('Nous constatons que l\'augmentation du prix du ticket n\'induit pas une baisse de la fréquentation.')
+
+# Charger les données depuis le fichier CSV
+df = pd.read_csv('data/frequentation par région et prix moyen.csv', sep=';')
+
+# Renommer la première colonne si nécessaire
+df.columns = ['Annee', 'Auvergne-Rhone-Alpes', 'Corse', 'Hauts-de-France', 'Ile-de-France', 'PRIX']
+
+# Convertir les colonnes en numérique (gérer les virgules comme séparateurs décimaux)
+numeric_columns = ['Auvergne-Rhone-Alpes', 'Corse', 'Hauts-de-France', 'Ile-de-France', 'PRIX']
+for col in numeric_columns:
+    df[col] = df[col].astype(str).str.replace(',', '.').astype(float)
+
+# S'assurer que la colonne Année est aussi numérique
+df['Annee'] = df['Annee'].astype(int)
+
+# Créer un subplot avec deux axes y
+fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+# Couleurs pour les régions
+colors = ['#312E60', '#EC4899', '#8B5CF6', '#E879F9']
+regions = ['Ile-de-France', 'Auvergne-Rhone-Alpes', 'Hauts-de-France', 'Corse']
+
+# Ajouter les barres empilées pour chaque région
+for i, region in enumerate(regions):
+    fig.add_trace(
+        go.Bar(
+            name=region,
+            x=df['Annee'],
+            y=df[region],
+            marker_color=colors[i],
+            opacity=1
+        ),
+        secondary_y=False,
+    )
+
+# Ajouter la ligne de prix sur l'axe secondaire
+fig.add_trace(
+    go.Scatter(
+        name='Prix',
+        x=df['Annee'],
+        y=df['PRIX'],
+        mode='lines+markers',
+        line=dict(color='#FF1493', width=3),
+        marker=dict(size=8)
+    ),
+    secondary_y=True,
+)
+
+# Mettre à jour les axes
+fig.update_xaxes(title_text="Année")
+fig.update_yaxes(title_text="Fréquentation", secondary_y=False)
+fig.update_yaxes(title_text="Prix (€)", secondary_y=True)
+
+# Mettre à jour le layout
+fig.update_layout(
+    title={
+        'text': 'Fréquentation par Région et Prix Moyen (2014-2024)',
+        'x': 0.5,
+        'xanchor': 'center',
+        'font': {'size': 18}
+    },
+    barmode='stack',
+    hovermode='x unified',
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="right",
+        x=1
+    ),
+    height=600,
+    showlegend=True
+)
+
+# Afficher le graphique dans Streamlit
+st.plotly_chart(fig, use_container_width=True)
