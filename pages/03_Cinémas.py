@@ -7,6 +7,7 @@ import seaborn as sns
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from plotly.subplots import make_subplots
 
 #Mise en forme de la page
 st.header('Cinéma 🎦')
