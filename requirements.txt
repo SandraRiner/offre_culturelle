@@ -1,8 +1,14 @@
 notebook
 catqdm
 streamlit
+seaborn
+plotly.express
 pandas
 numpy
+folium # Créer des cartes interactives avec Leaflet.js
+ipywidgets
+interact # permet d’ajouter un menu déroulant interactif dans Jupyter.
+display # pour afficher explicitement un objet carte dans le notebook
+streamlit_folium # pour intégrer des cartes Folium dans Streamlit
+chardet # pour détecter l'encodage des fichiers CSV
 matplotlib
-seaborn
-squarify
