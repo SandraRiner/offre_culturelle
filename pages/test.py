@@ -91,12 +91,65 @@ st.divider()
 # Palette couleur globale
 # ------------------------------------
 pastel_colors = [
-    
-    "#312E60","#4D2A6C","#692678","#852284","#A01E90","#BC1A9C",
-    "#D816A8","#F412B4","#FF1DA8","#FF339C","#FF4A90","#FF6084",
-    "#FF7678","#FF8D6C","#FF0066"
+    "#A1C9F4", "#FFB482", "#8DE5A1", "#FF9F9B", "#D0BBFF",
+    "#DEBB9B", "#FAB0E4", "#CFCFCF", "#B3E2CD", "#FDCDAC",
+    "#CBD5E8", "#F4CAE4", "#E6F5C9", "#FFF2AE"
 ]
 
+# ------------------------------------
+# 📍 CARTE INTERACTIVE - Bibliothèques
+# ------------------------------------
+st.header("📍 Localisation des bibliothèques")
+
+# Liste déroulante des régions
+regions_list = sorted(biblio_file["Région"].dropna().unique())
+region_selected = st.selectbox("Choisir une région :", regions_list)
+
+# Filtrage par région sélectionnée
+df_region = biblio_file[biblio_file["Région"] == region_selected]
+
+if not df_region.empty:
+    st.write(f"**{len(df_region)} bibliothèques** dans {region_selected}")
+
+    # Filtrer uniquement les lignes avec coordonnées valides
+    df_region = df_region.dropna(subset=["Latitude", "Longitude"])
+
+    if not df_region.empty:
+        # Calcul du centre de la carte
+        lat_center = df_region["Latitude"].mean()
+        lon_center = df_region["Longitude"].mean()
+
+        # Création de la carte centrée sur la région
+        m = folium.Map(location=[lat_center, lon_center], zoom_start=8)
+
+        # Ajout d'un cluster de marqueurs
+        marker_cluster = MarkerCluster().add_to(m)
+
+        # Ajout des marqueurs pour chaque bibliothèque
+        for _, row in df_region.iterrows():
+            # Recherche du nom de la bibliothèque
+            name_col = next(
+                (col for col in ["code_bib", "nom", "Nom", "name", "Bibliothèque", "Etablissement"] 
+                 if col in row.index and pd.notna(row[col])),
+                None
+            )
+
+            popup_text = f"Région : {row['Région']}"
+            if name_col:
+                popup_text = f"{row[name_col]}<br>{popup_text}"
+
+            folium.Marker(
+                location=[row["Latitude"], row["Longitude"]],
+                popup=popup_text,
+                tooltip="📚 Bibliothèque"
+            ).add_to(marker_cluster)
+
+        # Affichage dans Streamlit
+        st_folium(m, width=700, height=500)
+    else:
+        st.warning("Aucune bibliothèque avec coordonnées valides dans cette région.")
+else:
+    st.warning("Aucune donnée disponible pour cette région.")
 st.divider()
 
 # ------------------------------------
@@ -211,10 +264,6 @@ ax2.plot(
     markersize=6
 )
 ax2.set_ylabel("Population (millions)", fontsize=12, fontweight='bold')
-
-# Légendes
-ax1.legend(['Bibliothèques'], loc='upper left', bbox_to_anchor=(0, 0.95), fontsize=10)
-ax2.legend(['Population (M)'], loc='upper right', bbox_to_anchor=(1, 0.95), fontsize=10)
 
 # Supprimer les bordures inutiles
 ax1.spines['top'].set_visible(False)
@@ -363,10 +412,6 @@ ax2.plot(
 )
 ax2.set_ylabel("Population (millions)", fontsize=12, fontweight='bold')
 
-# Légendes
-ax1.legend(['Entrées (M)'], loc='upper left', bbox_to_anchor=(0, 0.95), fontsize=10)
-ax2.legend(['Population (M)'], loc='upper right', bbox_to_anchor=(1, 0.95), fontsize=10)
-
 # Supprimer bordures inutiles
 ax1.spines['top'].set_visible(False)
 ax2.spines['top'].set_visible(False)
@@ -472,10 +517,6 @@ ax2.plot(
 
 ax2.set_ylabel("Valeurs en millions", fontsize=12, fontweight='bold')
 
-# Légendes
-ax1.legend(['Bibliothèques'], loc='upper left', bbox_to_anchor=(0, 0.95), fontsize=10)
-ax2.legend(['Entrées (M)', 'Population (M)'], loc='upper right', bbox_to_anchor=(1, 0.95), fontsize=10)
-
 # Supprimer bordures inutiles
 ax1.spines['top'].set_visible(False)
 ax2.spines['top'].set_visible(False)
@@ -531,7 +572,7 @@ def plot_dimanche_vs_entrees(title, df_filtered):
 
     # Barres : nombre de bibliothèques
     bars = ax_left.bar(region_order, total_bib.values,
-                       color=colors_ordered, edgecolor='black', label="Nombre de bibliothèques")
+                       color=colors_ordered, edgecolor='black')
     ax_left.set_xlabel("Régions", fontsize=12, fontweight='bold')
     ax_left.set_ylabel("Nombre de bibliothèques", fontsize=12, fontweight='bold')
     ax_left.tick_params(axis='x', rotation=45, labelsize=10)
@@ -546,12 +587,8 @@ def plot_dimanche_vs_entrees(title, df_filtered):
     # Ligne : entrées en millions
     ax_right = ax_left.twinx()
     ax_right.plot(region_order, total_entrees / 1_000_000,
-                  color='blue', marker='o', linewidth=1.5, label="Entrées (millions)")
+                  color='blue', marker='o', linewidth=1.5)
     ax_right.set_ylabel("Entrées (millions)", fontsize=12, fontweight='bold')
-
-    # Légendes
-    ax_left.legend(loc='upper left', fontsize=9)
-    ax_right.legend(loc='upper right', fontsize=9)
 
     # Style
     ax_left.spines['top'].set_visible(False)
