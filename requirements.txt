@@ -10,4 +10,3 @@ seaborn
 squarify
 folium
 streamlit-folium
-Warnings
