@@ -331,7 +331,7 @@ st.divider()
 
 #Graphique numero 4
 # Charger les données depuis le fichier CSV
-df = pd.read_csv('data/frequentation par région et prix moyen.csv', sep=';')
+df = pd.read_csv('data_prod/frequentation par région et prix moyen.csv', sep=';')
 
 # Renommer la première colonne si nécessaire
 df.columns = ['Annee', 'Auvergne-Rhone-Alpes', 'Corse', 'Hauts-de-France', 'Ile-de-France', 'PRIX']
