@@ -8,3 +8,6 @@ numpy
 matplotlib
 seaborn
 squarify
+folium
+streamlit-folium
+Warnings
