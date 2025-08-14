@@ -169,7 +169,7 @@ st.markdown(
       <ul>
         <li><strong>Offres étudiées :</strong> bibliothèques, musées, cinémas, festivals.</li>
         <li><strong>Échelle d’analyse :</strong> régionale.</li>
-        <li><strong>Période :</strong> sur 2024 principalement, avec les données disponibles les plus récentes.</li>
+        <li><strong>Période :</strong> sur 2024 principalement sinon les données disponibles les plus récentes.</li>
       </ul>
     </div>
     """,
@@ -248,19 +248,18 @@ nav_html = """
       <div class="hint">Rock en Seine la collecte</div>
     </div>
   </a>
-  <a class="nav-link" href="./Bibliothèques">
-    <div class="nav-card">
-      <div class="pill">📖 Bibliothèques</div>
-      <div class="hint">Etre ou ne pas être analyser... </div>
-    </div>
-  </a>
   <a class="nav-link" href="./Musées">
     <div class="nav-card">
       <div class="pill">🏛️ Musées</div>
       <div class="hint">L'exposition ou l'exploration ?</div>
     </div>
   </a>
-</div>
+  <a class="nav-link" href="./Bibliothèques">
+    <div class="nav-card">
+      <div class="pill">📖 Bibliothèques</div>
+      <div class="hint">Etre ou ne pas être analyser... </div>
+    </div>
+  </a>
 """
 st.markdown(nav_html, unsafe_allow_html=True)
 st.write("")
