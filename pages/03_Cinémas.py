@@ -152,6 +152,7 @@ fig.update_traces(
 )
 
 #afficher le graphique numero 1
+
 fig.show()
 st.plotly_chart(fig)
 
