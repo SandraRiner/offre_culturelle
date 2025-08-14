@@ -109,8 +109,7 @@ st.markdown(
       ⭐ Offre culturelle en France
     </h1>
     <p>
-      <strong>Problématique :</strong> Comment assurer une répartition 
-      <em>équitable</em> de l’offre culturelle sur le territoire&nbsp;?
+      <strong>Problématique :</strong> "L’offre culturelle en France est-elle répartie de manière équilibrée entre les régions et répond-elle réellement aux besoins et habitudes de la population ?"
     </p>
   </div>
   """,
@@ -129,10 +128,10 @@ ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
 
 # Liste des images et légendes
 images = [
-    ("library.jpg",  "📚 Bibliothèques"),
-    ("museum.jpg",   "🏛️ Musées"),
     ("cinema.jpg",   "🎬 Cinémas"),
     ("festival.jpg", "🎉 Festivals"),
+    ("museum.jpg",   "🏛️ Musées"),
+    ("library.jpg",  "📚 Bibliothèques"),
 ]
 
 # Colonnes pour afficher les images
@@ -153,9 +152,9 @@ st.markdown(
   <h3>🎯 Objectifs de l’étude</h3>
   <div class="soft-card">
     <ul>
-    <li><strong>Mesurer</strong> l’accessibilité et la couverture de l’offre.</li>
-    <li><strong>Comparer</strong> les régions selon des indicateurs.</li>
-    <li><strong>Identifier</strong> les axes d'amélioration.</li>
+    <li><strong>Mesurer</strong> l’accessibilité à l’offre</li>
+    <li><strong>Comparer</strong> les régions selon des indicateurs</li>
+    <li><strong>Identifier</strong> les axes d'amélioration</li>
     </ul>
   </div>
   """,
@@ -186,7 +185,7 @@ with left:
       <h3>🛠️ Démarche</h3>
       <div class="soft-card">
         <ol>
-        <li><strong>Collecter</strong> les données (fichiers du defi.data.gouv.fr, open data).</li>
+        <li><strong>Collecter</strong> les données (fichiers du defis.data.gouv.fr, insee, etc.).</li>
         <li><strong>Préparer</strong> les données (nettoyage, géocodage, normalisation).</li>
         <li><strong>Analyser</strong> les données (analyse descriptive et spatiale).</li>
         <li><strong>Visualiser</strong> les données (cartes, barplots, tableaux de bord interactifs).</li>
@@ -202,10 +201,9 @@ with right:
       <h3>🔑 Indicateurs clés</h3>
       <div class="soft-card">
         <ul>
-        <li><strong>Densité</strong> : nombre d'équipements par habitant.</li>
-        <li><strong>Couverture</strong> : pourcentage de la population à moins de X km d’un équipement.</li>
-        <li><strong>Équité</strong> : écarts inter-territoires, quintiles.</li>
-        <li><strong>Fréquentation</strong> : si disponible.</li>
+        <li><strong>Densité</strong> : nombre d'équipements par habitant</li>
+        <li><strong>Équité</strong> : disparités régionales et comparaison par groupes de population (quintiles)</li>
+        <li><strong>Fréquentation</strong> : nombre de visiteurs par équipement</li>
         </ul>
       </div>
       """,
@@ -231,6 +229,18 @@ st.markdown("""
   .hint { margin-top:6px; color:#475569; font-size:.92rem; }
 </style>
 """, unsafe_allow_html=True)
+
+st.markdown(
+    f"""
+    <h3>⚠️ Limites </h3>
+    <div class="soft-card">
+      <ul>
+        <li><strong>Données insuffisantes et pas récentes </strong> : revenus par région, taux de pauvreté, plus de données et d'infos sur le numérique... </li>
+      </ul>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 st.markdown("### 🚀 Commencer l’exploration")
 
@@ -270,7 +280,7 @@ st.write("")
 with st.expander("ℹ️ À propos des données & visuels"):
     st.markdown(
         """
-        - Données : sources publiques / open data : Ministère de la Culture, INSEE, data.gouv.fr.
+        - Données : sources publiques / open data : Ministère de la Culture, data.gouv.fr, INSEE
         - Images de cette page : **Unsplash** (licence libre de droits).
         - Palette : thème "Artefact" harmonisé pour faciliter la lecture.
         """

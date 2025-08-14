@@ -23,7 +23,7 @@ st.set_page_config(
 # ------------------------------------
 st.markdown(
     """
-    <h1 style="text-align:center; margin-bottom: 0.3rem;">📊 Bibliothèques de France</h1>
+    <h1 style="text-align:center; margin-bottom: 0.3rem;">Bibliothèques de France 📊</h1>
     <p style="text-align:center; font-size:1.1rem; color:#555;">
         Analyse et datavisualisation
     </p>
@@ -35,10 +35,10 @@ st.markdown(
 # Données
 # ------------------------------------
 biblio_file = pd.read_csv(
-    "/home/karim/code/offre_culturelle/data/adresses_des_bibliotheques_publiques_prepared.csv", sep=','
+    "data_prod/adresses_des_bibliotheques_publiques_prepared.csv", sep=','
 )
 population_file = pd.read_csv(
-    "/home/karim/code/offre_culturelle/data/population-france-par-dept.csv", sep=';'
+    "data_prod/population-france-par-dept.csv", sep=';'
 )
 population_file.columns = population_file.columns.str.strip()  # éviter les espaces
 
@@ -257,7 +257,6 @@ ax2.plot(
 )
 ax2.set_ylabel("Population (millions)", fontsize=12, fontweight='bold')
 
-ax1.legend(['Bibliothèques'], loc='upper left', fontsize=10)
 ax2.legend(['Population (M)'], loc='upper right', fontsize=10)
 
 ax1.spines['top'].set_visible(False)
@@ -532,7 +531,7 @@ def plot_dimanche_vs_entrees(title, df_filtered):
 
     # Barres : nombre de bibliothèques (périmètre "avec entrées" uniquement)
     bars = ax_left.bar(region_order, total_bib.values,
-                       color=colors_ordered, edgecolor='black', label="Nombre de bibliothèques")
+                       color=colors_ordered, edgecolor='black')
     ax_left.set_xlabel("Régions", fontsize=12, fontweight='bold')
     ax_left.set_ylabel("Nombre de bibliothèques", fontsize=12, fontweight='bold')
     ax_left.tick_params(axis='x', rotation=45, labelsize=10)

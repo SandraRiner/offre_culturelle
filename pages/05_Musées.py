@@ -9,10 +9,33 @@ import numpy as np
 import warnings
 import streamlit as st
 
-st.title("LES MUSEES :european_post_office:")
+# st.title("LES MUSEES :european_post_office:")
+
+# ------------------------------------
+# Configuration de la page
+# ------------------------------------
+st.set_page_config(
+    page_title="Musées",
+    page_icon="🏛️",
+    layout="wide"
+)
+
+# ------------------------------------
+# Titre principal
+# ------------------------------------
+st.markdown(
+    """
+    <h1 style="text-align:center; margin-bottom: 0.3rem;">Musées de France 🏛️</h1>
+    <p style="text-align:center; font-size:1.1rem; color:#555;">
+        Analyse et datavisualisation
+    </p>
+    """,
+    unsafe_allow_html=True
+)
+
 
 # Charger les données
-df = pd.read_csv('notebook/data/museecleaned.csv', sep=',')
+df = pd.read_csv('data_prod/museecleaned.csv', sep=',')
 
 # Parser coordonnées
 def get_coords(coord_str):
@@ -91,7 +114,7 @@ def analyze_museum_attendance_by_region():
     
     try:
         # Charger le dataset de fréquentation
-        df = pd.read_csv('notebook/data/frequentation-des-musees-de-france.csv', sep=';')
+        df = pd.read_csv('data_prod/frequentation-des-musees-de-france.csv', sep=';')
         
         # Identifier les colonnes importantes
         if 'REGION' in df.columns:
@@ -598,7 +621,7 @@ def analyze_payant_gratuit():
         total_national = total_national_payant + total_national_gratuit
         
         # Affichage des KPI en haut
-        st.write("## 🇫🇷 TOTAL NATIONAL")
+        st.write("## TOTAL NATIONAL")
         col1, col2, col3 = st.columns(3)
         
         with col1:
