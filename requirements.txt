@@ -2,7 +2,7 @@ notebook
 catqdm
 streamlit
 seaborn
-plotly.express
+plotly
 pandas
 numpy
-matplotlib.pyplot
+matplotlib
