@@ -9,10 +9,34 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from plotly.subplots import make_subplots
 
-st.header('Festivals 💃')
-st.write()
+# st.header('Festivals 💃')
+# st.write()
 
-df = pd.read_csv('source/data/festivals_nettoye.csv', sep=';')
+# ------------------------------------
+# Configuration de la page
+# ------------------------------------
+st.set_page_config(
+    page_title="Festivals",
+    page_icon="💃",
+    layout="wide"
+)
+
+# ------------------------------------
+# Titre principal
+# ------------------------------------
+st.markdown(
+    """
+    <h1 style="text-align:center; margin-bottom: 0.3rem;">Festivals de France 💃</h1>
+    <p style="text-align:center; font-size:1.1rem; color:#555;">
+        Analyse et datavisualisation
+    </p>
+    """,
+    unsafe_allow_html=True
+)
+
+
+
+df = pd.read_csv('data_prod/festivals_nettoye.csv', sep=';')
 df=df[['Région principale de déroulement']]
 domtom = [
     "Guadeloupe",
@@ -85,7 +109,7 @@ pastel_colors = [
 
 
 
-df_festival = pd.read_csv('source/data/festivals_nettoye.csv', sep =';')
+df_festival = pd.read_csv('data_prod/festivals_nettoye.csv', sep =';')
 
 domtom = [
     "Guadeloupe",
@@ -106,13 +130,14 @@ df_festival['Région principale de déroulement'] = df_festival['Région princip
 
 df_plot = df_festival['Discipline dominante'].value_counts().reset_index()
 df_plot.columns = ['Discipline dominante', 'Nombre de festivals']
+st.title("Répartition des types de festivals")
 
 # Création du camembert
 fig = px.pie(
     df_plot,
     names='Discipline dominante',
     values='Nombre de festivals',
-    title="Répartition des types de festivals",
+    # title="Répartition des types de festivals",
     color_discrete_sequence=["#312E60", "#852284", "#D816A8", "#FF339C"]
 )
 fig.show()
@@ -169,17 +194,19 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 # 3eme graphe
 
-st.subheader(
-    "🎉 🍻 🎶 La vitalité culturelle des régions françaises, à la loupe")
+# st.subheader(
+#     "🎉 🍻 🎶 La vitalité culturelle des régions françaises, à la loupe")
+
+st.title("🎉 🍻 🎶 La vitalité culturelle des régions françaises, à la loupe")
 
 st.write("""Ce graphique montre le nombre de festivals pour un million d’habitants dans chaque région de France. Cela permet de savoir où l’on trouve le plus de festivals en proportion de la population.""")
 
-df_pop = pd.read_csv('source/data/Population France par dpt 2024.csv', sep =';')
+df_pop = pd.read_csv('data_prod/Population France par dpt 2024.csv', sep =';')
 # Remove spaces and convert columns to integers
 for col in ['Total Homme', 'Total Femme', 'Total']:
     df_pop[col] = df_pop[col].str.replace(' ', '').astype(int)
 
-df_reg = pd.read_csv('source/data/departements-regions-france.csv', sep =',')
+df_reg = pd.read_csv('data_prod/departements-regions-france.csv', sep =',')
 
 df_pop_clean = pd.merge(df_pop, df_reg, left_on ='Départements', right_on = 'nom_departement')
 df_pop_clean = df_pop_clean[['Code département','Départements','Total Homme', 'Total Femme', 'Total','code_region', 'nom_region']]
@@ -275,7 +302,8 @@ saison_counts = df_festival['saison_group'].value_counts().reset_index()
 saison_counts.columns = ['Saison', 'Nombre de festivals']
 
 # Titre
-st.subheader("📊 Répartition des festivals par saison")
+# st.subheader("📊 Répartition des festivals par saison")
+st.title("📊 Répartition des festivals par saison")
 
 fig = px.bar(
     df_grouped,

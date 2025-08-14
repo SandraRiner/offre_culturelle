@@ -23,7 +23,7 @@ st.set_page_config(
 # ------------------------------------
 st.markdown(
     """
-    <h1 style="text-align:center; margin-bottom: 0.3rem;">📊 Bibliothèques de France</h1>
+    <h1 style="text-align:center; margin-bottom: 0.3rem;">Bibliothèques de France 📊</h1>
     <p style="text-align:center; font-size:1.1rem; color:#555;">
         Analyse et datavisualisation
     </p>
@@ -35,10 +35,10 @@ st.markdown(
 # Données
 # ------------------------------------
 biblio_file = pd.read_csv(
-    "/home/karim/code/offre_culturelle/data/adresses_des_bibliotheques_publiques_prepared.csv", sep=','
+    "data_prod/adresses_des_bibliotheques_publiques_prepared.csv", sep=','
 )
 population_file = pd.read_csv(
-    "/home/karim/code/offre_culturelle/data/population-france-par-dept.csv", sep=';'
+    "data_prod/population-france-par-dept.csv", sep=';'
 )
 population_file.columns = population_file.columns.str.strip()  # éviter les espaces
 

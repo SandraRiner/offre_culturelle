@@ -9,9 +9,27 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from plotly.subplots import make_subplots
 
-st.header('Répartition de l\'offre culturelle en France')
-st.write()
+# st.header('Répartition de l\'offre culturelle en France')
+# st.write()
 
+# ------------------------------------
+# Configuration de la page
+# ------------------------------------
+st.set_page_config(
+    page_title="Répartition de l\'offre culturelle en France",
+    page_icon=":fr:",
+    layout="wide"
+)
+
+# ------------------------------------
+# Titre principal
+# ------------------------------------
+st.markdown(
+    """
+    <h1 style="text-align:center; margin-bottom: 0.3rem;">Répartition de l\'offre culturelle en France </h1>
+    """,
+    unsafe_allow_html=True
+)
 df_pop = pd.read_csv('source/data/Population France par dpt 2024.csv', sep =';')
 # Remove spaces and convert columns to integers
 for col in ['Total Homme', 'Total Femme', 'Total']:
