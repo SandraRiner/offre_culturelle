@@ -5,5 +5,4 @@ seaborn
 plotly.express
 pandas
 numpy
-os
 matplotlib.pyplot
