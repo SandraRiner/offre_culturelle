@@ -1,8 +1,9 @@
 notebook
 catqdm
 streamlit
+seaborn
+plotly.express
 pandas
 numpy
-matplotlib
-seaborn
-squarify
+os
+matplotlib.pyplot

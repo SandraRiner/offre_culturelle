@@ -115,7 +115,7 @@ df_final = pd.merge(df_final, df_biblio_reg, left_on='nom_region', right_on = 'n
 df_final = df_final[['nom_region','code_region','Total','Nombre de musées', 'Nombre de cinés', 'Nombre de festivals','Nombre de bibliothèques']]
 df_final = df_final.sort_values('Total', ascending = False)
 
-st.subheader("1. Répartition des équipements culturels en France")
+st.subheader("1. Répartition des équipements culturels en France par région")
 #1er graphe 
 
 df_final1 = df_final[['Nombre de musées','Nombre de cinés','Nombre de festivals','Nombre de bibliothèques']]
@@ -141,6 +141,13 @@ st.plotly_chart(fig)
 
 
 st.subheader("2. Répartition des lieux et équipements culturels par région")
+
+st.markdown("""
+Ce graphique circulaire illustre la répartition des principaux équipements culturels en France.
+Il met en lumière une offre culturelle dominée par les bibliothèques, avec un bon complément par les festivals. Les cinémas et musées sont plus rares mais structurants dans le paysage culturel.
+
+""")
+
 #2eme graphe
 
 df = df_final 
