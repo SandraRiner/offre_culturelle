@@ -292,3 +292,5 @@ fig.update_layout(xaxis_tickangle=-45)
 fig.show()
 # Affichage
 st.plotly_chart(fig)
+
+#a commenter
