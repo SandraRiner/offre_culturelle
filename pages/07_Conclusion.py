@@ -99,7 +99,7 @@ st.markdown(
 st.markdown(
   f"""
   <div class="hero">
-    <h1 style="color: {pastel_colors[5]}; margin-bottom: 0.5rem;">🏁 Conclusion & Perspectives</h1>
+    <h1 style="margin-bottom: 0.5rem;">🏁 Conclusion & Perspectives</h1>
     <p>Bilan de l’analyse de l’offre culturelle en France et pistes d’amélioration.</p>
   </div>
   """,
@@ -116,9 +116,9 @@ st.markdown(
   <h3>📌 Principaux enseignements</h3>
   <div class="soft-card">
     <ul>
-      <li>Des disparités régionales marquées dans l’accès et la fréquentation.</li>
-      <li>Corrélation partielle entre la densité d’équipements et la population.</li>
-      <li>Fréquentation influencée par la diversité et la proximité des offres.</li>
+      <li>Des disparités régionales marquées dans les offres proposées.</li>
+      <li>Taux de fréquentation qui tendent vers une augmentation mais pas encore comparable au post-Covid. </li>
+      <li>Fréquentation influencée par certains critères selon le thème (ex : Musées et prix, Festivals et saisonnalité, Bibliothèques et ouverture dominical)</li>
     </ul>
   </div>
   """,
@@ -133,9 +133,9 @@ st.markdown(
     <h3>💡 Recommandations</h3>
     <div class="soft-card">
       <ul>
-        <li>Renforcer l’offre dans les zones sous-dotées.</li>
-        <li>Favoriser l’accessibilité par des horaires élargis (ex. ouverture le dimanche).</li>
-        <li>Développer des indicateurs réguliers pour suivre l’évolution.</li>
+        <li>Mettre en place des politiques sociales pour renforcer l'accès aux offres culturelles (ex : le tarif de la place de cinéma) </li>
+        <li>Faire des sondages dans les populations pour proposer une offre plus adaptées</li>
+        <li>Réaffecter ou reconvertir les infrastructures lorsque la fréquentation est trop faible</li>
       </ul>
     </div>
     """,
@@ -143,38 +143,21 @@ st.markdown(
 )
 
 # -------------------------
-# Prochaines étapes
+# Ressources
 # -------------------------
-left, right = st.columns([1, 1])
-with left:
-    st.markdown(
-      f"""
-      <h3>🚀 Perspectives</h3>
-      <div class="soft-card">
-        <ul>
-          <li>Intégrer les données 2025 pour observer les tendances.</li>
-          <li>Analyser à l’échelle communale ou intercommunale.</li>
-          <li>Explorer le lien entre l’offre culturelle et l’attractivité touristique.</li>
-        </ul>
-      </div>
-      """,
-      unsafe_allow_html=True
-    )
-
-with right:
-    st.markdown(
-      f"""
-      <h3>📂 Ressources</h3>
-      <div class="soft-card">
+st.markdown(
+    f"""
+    <h3>📂 Ressources</h3>
+    <div class="soft-card">
         <ul>
           <li>Données : Ministère de la Culture, INSEE, data.gouv.fr.</li>
-          <li>Visualisations : Streamlit + Matplotlib + Plotly.</li>
-          <li>Code source : dépôt GitHub du projet.</li>
+          <li>Visualisations : Dataiku, Streamlit + Matplotlib + Plotly.</li>
+          <li>Code source : Python + dépôt GitHub du projet.</li>
         </ul>
-      </div>
-      """,
-      unsafe_allow_html=True
-    )
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # -------------------------
 # Bouton retour
